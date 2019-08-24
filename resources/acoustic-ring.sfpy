@@ -1,0 +1,7 @@
+DOMAIN_NAME$Vh
+DOMAIN$_Primitive_|Ring|2|0.5|1.0|30|10
+VAR_FORMULATION$u,v:-int2d(Vh)(grad{u}*grad{v}) + int2d(Vh)(k*k*u*v) - int1d(Vh{2})(1j*k*u*v) - int2d(Vh)(f*v) + on(1, d)
+VARIABLES$k = 2*numpy.pi; f = lambda x,y: 0.; uinc = lambda x,y: numpy.exp(1j*2*numpy.pi*(x*numpy.cos(0.) + y*numpy.sin(0.))); d = lambda x,y: -numpy.exp(1j*2*numpy.pi*(x*numpy.cos(0.) + y*numpy.sin(0.)))
+OUTPUT_TYPE$2
+OUTPUT_CUSTOM$solution+uinc
+OUTPUT_PARAMS$cmap:hot

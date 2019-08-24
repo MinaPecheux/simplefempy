@@ -1,0 +1,7 @@
+DOMAIN_NAME$Vh
+DOMAIN$_Primitive_|Rectangle|1|6|4|50
+VAR_FORMULATION$u,v:-int2d(Vh)(grad{u}*grad{v}) + int2d(Vh)(k*k*u*v) + int1d(Vh{1})(1j*k*u*v) + int2d(Vh)(f*v)
+VARIABLES$k = 1.5*numpy.pi; f = FunctionalFunction(dirac(1.,2.,tol=0.1)) + FunctionalFunction(dirac(5.,2.,tol=0.1))
+OUTPUT_TYPE$2
+OUTPUT_CUSTOM$10*solution
+OUTPUT_PARAMS$cmap:coolwarm|3D
