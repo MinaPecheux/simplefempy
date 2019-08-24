@@ -53,7 +53,7 @@ Go into the unzipped folder and run the ``gui.py`` script with the following com
 python gui.py
 ```
 
-Then, click on the "Load" button at the top of the window and load one of the SimpleFEMPy state file (a .sfpy file) given in the ``resources/`` folder of the library.
+Then, click on the "Load" button at the top of the window and load one of the SimpleFEMPy state file (a .sfpy file) provided in the ``resources/`` folder of the library.
 
 ### Writing up your own script
 To show how the library works, let's take an example: the acoustic diffraction of a wave on a relatively simple geometry.
@@ -249,3 +249,9 @@ Here is a screenshot of the interface in its final state:
 Don't hesitate to play around with the display options to dive more into the interface!
 
 Moreover, if you want to save the current session or load an old one, you can use the "Load" and "Save" buttons at the top of the window. SimpleFEMPy uses its own state file format (a .sfpy file) to store all the data and easily restore a complete working session instantly. Some state files are provided in the ``resources/`` to help you get started.
+
+## Compatibilty Issues
+
+For now, SimpleFEMPy is meant to work with the latest Python 3 versions (> 3.5). Although it should work with Python 2, backward compatibilty is not guaranteed.
+
+However, the GUI interface requires official Python releases >= 3.7.1 because of Matplotlib and Tkinter conflicts in the previous versions, and in the current Homebrew Python 3.7 keg. Make sure to download and install your Python release from the [Python official website](https://www.python.org/downloads/) if you wish to use The GUI interface.

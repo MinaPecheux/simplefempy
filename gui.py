@@ -22,8 +22,7 @@ from simplefempy.converter import save_to_csv, save_to_vtk
 
 import numpy
 import matplotlib.pyplot as plt
-import matplotlib.backends.tkagg as tkagg
-from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 def labeled_input(canvas, label):
@@ -463,12 +462,16 @@ class SFEMPyApp(tk.Tk):
     def reset_session(self):
         """Loads a SimpleFEMPy session (domain, variables, weak formulation and
         output settings)."""
-        Logger.slog('Cleared session.', stackoffset=100)
         self.discrete_domain_name.set('Vh')
         self.discrete_domain      = None
         self.domain_reference     = None
         self.domain_cur_primitive = None
-        self.fig, self.fig_photo  = None, None
+        if self.fig is not None: self.fig.clear()
+        self.fig                  = None
+        # if necessary, destroy previous figure
+        if self.fig_photo is not None:
+            self.fig_photo.get_tk_widget().pack_forget()
+            self.fig_photo = None
         self.domain_primitives_list.selection_clear(0, tk.END)
         for child in self.domain_params.winfo_children(): child.destroy()
         self.domain_primitives_borders.delete(0, tk.END)
@@ -487,6 +490,7 @@ class SFEMPyApp(tk.Tk):
         self.output_opt_triangulate.set(0)
         self.output_opt_3d.set(0)
         self.output_opt_cmap.set(SFEMPyApp.CMAPS[0])
+        Logger.slog('Cleared session.', stackoffset=100)
         
     def show_domain(self):
         """Shows the plain domain (with no solution)."""
@@ -510,8 +514,8 @@ class SFEMPyApp(tk.Tk):
 
     def draw_figure(self, figure, loc=(0, 0)):
         """Draws a matplotlib figure onto the output canvas.
-        From: https://pythonprogramming.net/how-to-embed-matplotlib-graph-tkinter-gui/
-        Inspired by matplotlib source: lib/matplotlib/backends/backend_tkagg.py
+        Inspired by matplotlib source:
+        https://matplotlib.org/3.1.1/gallery/user_interfaces/embedding_in_tk_sgskip.html
 
         Parameters
         ----------
@@ -529,16 +533,14 @@ class SFEMPyApp(tk.Tk):
             figure.set_size_inches(s*sw, s*ch//120)
         else:
             figure.set_size_inches(s*ch//120, s*ch//120)
+            
+        # if necessary, destroy previous figure
+        if self.fig_photo is not None:
+            self.fig_photo.get_tk_widget().pack_forget()
         # create figure on canvas
-        fig_canvas_agg = FigureCanvasAgg(figure)
-        fig_canvas_agg.draw()
-        x, y, w, h = figure.bbox.bounds
-        fig_w, fig_h = int(w), int(h)
-        photo = tk.PhotoImage(master=self.output_canvas, width=fig_w, height=fig_h)
-        self.output_canvas.create_image(cw/2, ch/2, image=photo)
-        tkagg.blit(photo, fig_canvas_agg.get_renderer()._renderer, colormode=2)
-        # keep a reference to the figure to keep it alive
-        return photo
+        self.fig_photo = FigureCanvasTkAgg(figure, master=self.output_canvas)
+        self.fig_photo.draw()
+        self.fig_photo.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         
     def set_figure(self, only_domain=False):
         """Sets the output figure of the application (either with or without a
@@ -561,13 +563,13 @@ class SFEMPyApp(tk.Tk):
         old_fig = self.fig
         if only_domain:
             self.fig = self.discrete_domain.visualize(**plot_kwargs)
-            self.fig_photo = self.draw_figure(self.fig)
+            self.draw_figure(self.fig)
         else:
             plotted_sol = self.solution
             if plotted_sol is not None and self.output_type.get() != 1:
                 plotted_sol = self._parse_custom_str()
             self.fig = self.discrete_domain.visualize(z=plotted_sol, **plot_kwargs)
-            self.fig_photo = self.draw_figure(self.fig)
+            self.draw_figure(self.fig)
         if old_fig is not None: plt.close(old_fig)
         
     def load_session(self):
@@ -737,4 +739,7 @@ log_stream = SFEMPyStream(app)
 Logger.sset_stream(log_stream)
 
 # start main update
-tk.mainloop()
+try:
+    tk.mainloop()
+except UnicodeDecodeError:
+    pass
