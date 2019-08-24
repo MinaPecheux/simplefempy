@@ -35,7 +35,15 @@ For this first version of the library, my objectives were to:
 ## Install and test SimpleFEMPy
 SimpleFEMPy is a Python package that can be used directly by copying it into your working directory *(it is not yet available via ``pip``, sadly)*. To use the library, simply download the repository.
 
-After you unzip it, you will get a folder with two Python scripts, the library folder ``simplefempy/`` and a ``resources/`` folder.
+After you unzip it, you will get a folder with two Python scripts (``demo.py`` and ``gui.py``), the library folder ``simplefempy/`` and some ``doc/`` and ``resources/`` folders.
+
+To easily have all the required libraries, you can install and run the prepared Pipenv environment with the following commands:
+
+```
+pipenv install
+pipenv shell
+```
+
 
 ### TL;DR (command line)
 Go into the unzipped folder and run the ``demo.py`` script with the following command-line:
