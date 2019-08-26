@@ -43,7 +43,7 @@ QUADRATURE = {
     },
 }
 
-def make_line(length, step, nb_borders):
+def make_line(length, step, n_borders):
     """Creates a linear 2D geometry, i.e. a very thin rectangle (nodes and
     triangles, with a Delaunay triangulation).
     
@@ -53,7 +53,7 @@ def make_line(length, step, nb_borders):
         Total size of the line (in horizontal direction).
     step : int, float
         Number of discretization points along the horizontal axis.
-    nb_borders : int
+    n_borders : int
         Number of distinct borders to create (with independent labels). Can be
         0 (only a surface), 1 (two borders each with one connex component, at
         each endpoint of the line) or 2 (two borders each with one connex
@@ -78,17 +78,17 @@ def make_line(length, step, nb_borders):
     tri   = mtri.Triangulation(nodes[:,0], nodes[:,1])
     for elt in tri.triangles: elts.append([2,10,elt[0],elt[1],elt[2]])
     # .. create edges (border)
-    if nb_borders == 0: pass
-    elif nb_borders == 1:
+    if n_borders == 0: pass
+    elif n_borders == 1:
         elts.append([1,1,0,len(xx),-1])
         elts.append([1,1,len(xx)-1,len(x)-1,-1])
-    elif nb_borders == 2:
+    elif n_borders == 2:
         elts.append([1,1,0,len(xx),-1])
         elts.append([1,2,len(xx)-1,len(x)-1,-1])
     else:
         Logger.slog('A "line" primitive can only be created with 0, 1 or 2 '
                     'distinct borders.\nInvalid value: {} (the domain '
-                    'will be created with 1 border).'.format(nb_borders),
+                    'will be created with 1 border).'.format(n_borders),
                     level='warning')
         for nx in range(len(xx)-1):
             elts.append([1,1,nx,nx+1,-1])
@@ -100,7 +100,7 @@ def make_line(length, step, nb_borders):
     
     return nodes, elements
 
-def make_rectangle(width, height, step, nb_borders):
+def make_rectangle(width, height, step, n_borders):
     """Creates a rectangle 2D geometry (nodes and triangles, with a Delaunay
     triangulation).
     
@@ -113,7 +113,7 @@ def make_rectangle(width, height, step, nb_borders):
     step : int, float
         Number of discretization points along a side (identical in horizontal
         and vertical directions).
-    nb_borders : int
+    n_borders : int
         Number of distinct borders to create (with independent labels). Can be
         0 (only a surface), 1 (one border with one connex component around the
         surface, 4 edges), 2 (two borders each with two connex components, 2
@@ -139,22 +139,22 @@ def make_rectangle(width, height, step, nb_borders):
     tri   = mtri.Triangulation(nodes[:,0], nodes[:,1])
     for elt in tri.triangles: elts.append([2,10,elt[0],elt[1],elt[2]])
     # .. create edges (border)
-    if nb_borders == 0: pass
-    elif nb_borders == 1:
+    if n_borders == 0: pass
+    elif n_borders == 1:
         for nx in range(len(xx)-1):
             elts.append([1,1,nx,nx+1,-1])
             elts.append([1,1,len(x)-len(xx)+nx,len(x)-len(xx)+nx+1,-1])
         for ny in range(len(yy)-1):
             elts.append([1,1,len(xx)*ny,len(xx)*(ny+1),-1])
             elts.append([1,1,len(xx)*ny+len(yy)-1,len(xx)*(ny+1)+len(yy)-1,-1])
-    elif nb_borders == 2:
+    elif n_borders == 2:
         for nx in range(len(xx)-1):
             elts.append([1,1,nx,nx+1,-1])
             elts.append([1,1,len(x)-len(xx)+nx,len(x)-len(xx)+nx+1,-1])
         for ny in range(len(yy)-1):
             elts.append([1,2,len(xx)*ny,len(xx)*(ny+1),-1])
             elts.append([1,2,len(xx)*ny+len(yy)-1,len(xx)*(ny+1)+len(yy)-1,-1])
-    elif nb_borders == 4:
+    elif n_borders == 4:
         for nx in range(len(xx)-1):
             elts.append([1,1,nx,nx+1,-1])
             elts.append([1,3,len(x)-len(xx)+nx,len(x)-len(xx)+nx+1,-1])
@@ -164,7 +164,7 @@ def make_rectangle(width, height, step, nb_borders):
     else:
         Logger.slog('A "square" primitive can only be created with 0, 1, 2 '
                     'or 4 distinct borders.\nInvalid value: {} (the domain '
-                    'will be created with 1 border).'.format(nb_borders),
+                    'will be created with 1 border).'.format(n_borders),
                     level='warning')
         for nx in range(len(xx)-1):
             elts.append([1,1,nx,nx+1,-1])
@@ -176,7 +176,7 @@ def make_rectangle(width, height, step, nb_borders):
     
     return nodes, elements
     
-def make_circle(radius, astep, rstep, nb_borders):
+def make_circle(radius, astep, rstep, n_borders):
     """Creates a circle 2D geometry (nodes and triangles, with a Delaunay
     triangulation).
     
@@ -188,7 +188,7 @@ def make_circle(radius, astep, rstep, nb_borders):
         Number of discretization points angular-wise.
     rstep : int, float
         Number of discretization points radius-wise.
-    nb_borders : int
+    n_borders : int
         Number of distinct borders to create (with independent labels). Can be
         0 (only a surface) or 1 (one border with one connex component).
     """
@@ -220,15 +220,15 @@ def make_circle(radius, astep, rstep, nb_borders):
     tri   = mtri.Triangulation(nodes[:,0], nodes[:,1])
     for elt in tri.triangles: elts.append([2,10,elt[0],elt[1],elt[2]])
     # .. create edges (border)
-    if nb_borders == 0: pass
-    elif nb_borders == 1:
+    if n_borders == 0: pass
+    elif n_borders == 1:
         for n in range(len(m)-1):
             elts.append([1,1,len(x)-len(m)+n,len(x)-len(m)+n+1,-1])
         elts.append([1,1,len(x)-1,len(x)-len(m),-1])
     else:
         Logger.slog('A "circle" primitive can only be created with 0 or 1 '
                     'distinct borders.\nInvalid value: {} (the domain will '
-                    'be created with 1 border).'.format(nb_borders),
+                    'be created with 1 border).'.format(n_borders),
                     level='warning')
         for n in range(len(m)-1):
             elts.append([1,1,len(x)-len(m)+n,len(x)-len(m)+n+1,-1])
@@ -237,7 +237,7 @@ def make_circle(radius, astep, rstep, nb_borders):
     
     return nodes, elements
 
-def make_ring(rint, rext, astep, rstep, nb_borders):
+def make_ring(rint, rext, astep, rstep, n_borders):
     """Creates a ring 2D geometry (nodes and triangles, with a Delaunay
     triangulation).
     
@@ -251,7 +251,7 @@ def make_ring(rint, rext, astep, rstep, nb_borders):
         Number of discretization points angular-wise.
     rstep : int, float
         Number of discretization points radius-wise.
-    nb_borders : int
+    n_borders : int
         Number of distinct borders to create (with independent labels). Can be
         0 (only a surface), 1 (one border with two connex components around the
         surface) or 2 (two borders each with one connex component).
@@ -286,15 +286,15 @@ def make_ring(rint, rext, astep, rstep, nb_borders):
         if np.all(elt < len(m)): continue # ignore inner triangles (in hole)
         elts.append([2,10,elt[0],elt[1],elt[2]])
     # .. create edges (border)
-    if nb_borders == 0: pass
-    elif nb_borders == 1:
+    if n_borders == 0: pass
+    elif n_borders == 1:
         for n in range(len(m)-1):
             elts.append([1,1,n,n+1,-1])
         elts.append([1,1,len(m)-1,0,-1])
         for n in range(len(m)-1):
             elts.append([1,1,len(x)-len(m)+n,len(x)-len(m)+n+1,-1])
         elts.append([1,1,len(x)-1,len(x)-len(m),-1])
-    elif nb_borders == 2:
+    elif n_borders == 2:
         for n in range(len(m)-1):
             elts.append([1,1,n,n+1,-1])
         elts.append([1,1,len(m)-1,0,-1])
@@ -304,7 +304,7 @@ def make_ring(rint, rext, astep, rstep, nb_borders):
     else:
         Logger.slog('A "ring" primitive can only be created with 0, 1 or 2 '
                     'distinct borders.\nInvalid value: {} (the domain will '
-                    'be created with 2 borders).'.format(nb_borders),
+                    'be created with 2 borders).'.format(n_borders),
                     level='warning')
         for n in range(len(m)-1):
             elts.append([1,1,n,n+1,-1])
