@@ -462,43 +462,43 @@ class DiscreteDomain(object):
     @typechecker((type,[int,float],[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def rectangle(cls, width, height, step=10, nb_borders=1, **kwargs):
+    def rectangle(cls, width, height, n_points=10, nb_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         a rectangular 2D geometry.
         
         The parameters are the same as in the Geometrizor's make_rectangle()
         function."""
-        nodes, elements = make_rectangle(width, height, step+1, nb_borders)
+        nodes, elements = make_rectangle(width, height, n_points, nb_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     @classmethod
     @typechecker((type,[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def line(cls, length, step=10, nb_borders=1, **kwargs):
+    def line(cls, length, n_points=10, nb_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         a rectangular 2D geometry.
         
         The parameters are the same as in the Geometrizor's make_line()
         function."""
-        nodes, elements = make_line(length, step+1, nb_borders)
+        nodes, elements = make_line(length, n_points, nb_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     @classmethod
     @typechecker((type,[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def circle(cls, radius, astep=20, rstep=3, nb_borders=1, **kwargs):
+    def circle(cls, radius, an_points=20, rn_points=3, nb_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         a circular 2D geometry.
         
         The parameters are the same as in the Geometrizor's make_circle()
         function."""
-        nodes, elements = make_circle(radius, astep+1, rstep+1, nb_borders)
+        nodes, elements = make_circle(radius, an_points, rn_points, nb_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     @classmethod
     @typechecker((type,[int,float],[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def ring(cls, rint, rext, astep=20, rstep=3, nb_borders=1, **kwargs):
+    def ring(cls, rint, rext, an_points=20, rn_points=3, nb_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         an annular 2D geometry.
         
@@ -507,7 +507,7 @@ class DiscreteDomain(object):
         if rint >= rext:
             Logger.serror('Cannot initialize "ring" primitive: "rint" is greater '
                           'than or equal to "rext"! ({} >= {})'.format(rint, rext))
-        nodes, elements = make_ring(rint, rext, astep+1, rstep+1, nb_borders)
+        nodes, elements = make_ring(rint, rext, an_points, rn_points, nb_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     
     @staticmethod

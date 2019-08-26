@@ -43,7 +43,7 @@ QUADRATURE = {
     },
 }
 
-def make_line(length, step, n_borders):
+def make_line(length, n_points, n_borders):
     """Creates a linear 2D geometry, i.e. a very thin rectangle (nodes and
     triangles, with a Delaunay triangulation).
     
@@ -51,7 +51,7 @@ def make_line(length, step, n_borders):
     ----------
     length : int, float
         Total size of the line (in horizontal direction).
-    step : int, float
+    n_points : int, float
         Number of discretization points along the horizontal axis.
     n_borders : int
         Number of distinct borders to create (with independent labels). Can be
@@ -59,14 +59,14 @@ def make_line(length, step, n_borders):
         each endpoint of the line) or 2 (two borders each with one connex
         component which is one of the line's endpoints).
     """
-    if step < 1:
-        Logger.serror('You must give a "step" of at least 1.', stackoffset=3)
-    if isinstance(step, float):
-        Logger.slog('You passed in a float "step" parameter: the value will be '
+    if n_points < 1:
+        Logger.serror('You must give a "n_points" of at least 1.', stackoffset=3)
+    if isinstance(n_points, float):
+        Logger.slog('You passed in a float "n_points" parameter: the value will be '
                     'truncated to an integer.', level='warning', stackoffset=3)
 
     # create nodes
-    xx, yy = np.linspace(0, length, step), np.linspace(0, length * 5e-3, 2)
+    xx, yy = np.linspace(0, length, n_points), np.linspace(0, length * 5e-3, 2)
     x, y   = np.meshgrid(xx, yy)
     x, y   = x.flatten(), y.flatten()
     z      = np.zeros((len(x), 1))
@@ -100,7 +100,7 @@ def make_line(length, step, n_borders):
     
     return nodes, elements
 
-def make_rectangle(width, height, step, n_borders):
+def make_rectangle(width, height, n_points, n_borders):
     """Creates a rectangle 2D geometry (nodes and triangles, with a Delaunay
     triangulation).
     
@@ -110,7 +110,7 @@ def make_rectangle(width, height, step, n_borders):
         Horizontal size of the rectangle (x direction).
     height : int, float
         Vertical size of the rectangle (y direction).
-    step : int, float
+    n_points : int, float
         Number of discretization points along a side (identical in horizontal
         and vertical directions).
     n_borders : int
@@ -120,14 +120,14 @@ def make_rectangle(width, height, step, n_borders):
         horizontal edges and 2 vertical edges) or 4 (four borders each with
         one connex component which is one of the rectangle's sides).
     """
-    if step < 1:
-        Logger.serror('You must give a "step" of at least 1.', stackoffset=3)
-    if isinstance(step, float):
-        Logger.slog('You passed in a float "step" parameter: the value will be '
+    if n_points < 1:
+        Logger.serror('You must give a "n_points" of at least 1.', stackoffset=3)
+    if isinstance(n_points, float):
+        Logger.slog('You passed in a float "n_points" parameter: the value will be '
                     'truncated to an integer.', level='warning', stackoffset=3)
     
     # create nodes
-    xx, yy = np.linspace(0, width, step), np.linspace(0, height, step)
+    xx, yy = np.linspace(0, width, n_points), np.linspace(0, height, n_points)
     x, y   = np.meshgrid(xx, yy)
     x, y   = x.flatten(), y.flatten()
     z      = np.zeros((len(x), 1))
@@ -176,7 +176,7 @@ def make_rectangle(width, height, step, n_borders):
     
     return nodes, elements
     
-def make_circle(radius, astep, rstep, n_borders):
+def make_circle(radius, an_points, rn_points, n_borders):
     """Creates a circle 2D geometry (nodes and triangles, with a Delaunay
     triangulation).
     
@@ -184,29 +184,29 @@ def make_circle(radius, astep, rstep, n_borders):
     ----------
     radius : int, float
         Radius of the circle.
-    astep : int, float
+    an_points : int, float
         Number of discretization points angular-wise.
-    rstep : int, float
+    rn_points : int, float
         Number of discretization points radius-wise.
     n_borders : int
         Number of distinct borders to create (with independent labels). Can be
         0 (only a surface) or 1 (one border with one connex component).
     """
-    if astep < 1:
-        Logger.serror('You must give a "astep" of at least 1.', stackoffset=3)
-    if rstep < 1:
-        Logger.serror('You must give a "rstep" of at least 1.', stackoffset=3)
-    if isinstance(astep, float):
-        Logger.slog('You passed in a float "astep" parameter: the value will be '
+    if an_points < 1:
+        Logger.serror('You must give a "an_points" of at least 1.', stackoffset=3)
+    if rn_points < 1:
+        Logger.serror('You must give a "rn_points" of at least 1.', stackoffset=3)
+    if isinstance(an_points, float):
+        Logger.slog('You passed in a float "an_points" parameter: the value will be '
                     'truncated to an integer.', level='warning', stackoffset=3)
-    if isinstance(rstep, float):
-        Logger.slog('You passed in a float "rstep" parameter: the value will be '
+    if isinstance(rn_points, float):
+        Logger.slog('You passed in a float "rn_points" parameter: the value will be '
                     'truncated to an integer.', level='warning', stackoffset=3)
 
     # create nodes
-    radiuses = np.linspace(0, radius, rstep+1)
+    radiuses = np.linspace(0, radius, rn_points+1)
     lx, ly   = [0.], [0.]
-    m        = np.linspace(0,2*np.pi,astep,endpoint=False)
+    m        = np.linspace(0,2*np.pi,an_points,endpoint=False)
     for r in radiuses[1:]:
         lx.extend(list(r*np.cos(m)))
         ly.extend(list(r*np.sin(m)))
@@ -237,7 +237,7 @@ def make_circle(radius, astep, rstep, n_borders):
     
     return nodes, elements
 
-def make_ring(rint, rext, astep, rstep, n_borders):
+def make_ring(rint, rext, an_points, rn_points, n_borders):
     """Creates a ring 2D geometry (nodes and triangles, with a Delaunay
     triangulation).
     
@@ -247,30 +247,30 @@ def make_ring(rint, rext, astep, rstep, n_borders):
         Internal radius of the ring.
     rext : int, float
         External radius of the ring.
-    astep : int, float
+    an_points : int, float
         Number of discretization points angular-wise.
-    rstep : int, float
+    rn_points : int, float
         Number of discretization points radius-wise.
     n_borders : int
         Number of distinct borders to create (with independent labels). Can be
         0 (only a surface), 1 (one border with two connex components around the
         surface) or 2 (two borders each with one connex component).
     """
-    if astep < 1:
-        Logger.serror('You must give a "astep" of at least 1.', stackoffset=3)
-    if rstep < 1:
-        Logger.serror('You must give a "rstep" of at least 1.', stackoffset=3)
-    if isinstance(astep, float):
-        Logger.slog('You passed in a float "astep" parameter: the value will be '
+    if an_points < 1:
+        Logger.serror('You must give a "an_points" of at least 1.', stackoffset=3)
+    if rn_points < 1:
+        Logger.serror('You must give a "rn_points" of at least 1.', stackoffset=3)
+    if isinstance(an_points, float):
+        Logger.slog('You passed in a float "an_points" parameter: the value will be '
                     'truncated to an integer.', level='warning', stackoffset=3)
-    if isinstance(rstep, float):
-        Logger.slog('You passed in a float "rstep" parameter: the value will be '
+    if isinstance(rn_points, float):
+        Logger.slog('You passed in a float "rn_points" parameter: the value will be '
                     'truncated to an integer.', level='warning', stackoffset=3)
 
     # create nodes
-    radiuses = np.linspace(rint, rext, rstep+1)
+    radiuses = np.linspace(rint, rext, rn_points+1)
     lx, ly   = [], []
-    m        = np.linspace(0,2*np.pi,astep,endpoint=False)
+    m        = np.linspace(0,2*np.pi,an_points,endpoint=False)
     for r in radiuses:
         lx.extend(list(r*np.cos(m)))
         ly.extend(list(r*np.sin(m)))
