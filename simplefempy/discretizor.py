@@ -1,10 +1,32 @@
-# Copyright 2019 - M. Pecheux
+# Copyright 2019 Mina Pêcheux (mina.pecheux@gmail.com)
+# ---------------------------
+# Distributed under the MIT License:
+# ==================================
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# ==============================================================================
 # [SimpleFEMPy] A basic Python PDE solver with the finite elements method
 # ------------------------------------------------------------------------------
 # discretizor.py - Class to represent a discretized domain (of finite dimension)
 # ==============================================================================
 import os
 import numpy as np
+import base64, binascii
 
 from .settings import LIB_SETTINGS
 if LIB_SETTINGS['using_tk']:
@@ -30,8 +52,8 @@ class DiscreteDomain(object):
     (an approximation of the continuous domain) defined by a set of nodes and
     their connectivity."""
     
-    def __init__(self, filename=None, nodes=None, elements=None, fe_type='P1',
-                 labels=None, name=None, tag=None, parent=None, scale=1.):
+    def __init__(self, file=None, nodes=None, elements=None, fe_type='P1',
+        labels=None, name=None, tag=None, parent=None, scale=1.):
         self.name       = 'Domain' if name is None else name
         self.tag        = 0 if tag is None else tag
         self.parent     = parent
@@ -39,7 +61,7 @@ class DiscreteDomain(object):
         self.set_poly   = False
         self.scale      = scale if parent is None else parent.scale
         
-        if filename is None:
+        if file is None:
             if nodes is None or elements is None:
                 Logger.serror('A DiscreteDomain instance can only be created '
                               'from a file or from direct data. Provide either:\n'
@@ -49,7 +71,7 @@ class DiscreteDomain(object):
             self.nodes    = nodes
             self.elements = elements
         else:
-            self.nodes, self.elements = load_gmsh(filename)
+            self.nodes, self.elements = load_gmsh(file)
             if parent is None: self.nodes *= scale
         
         # if all elements are edges, the domain is a border
@@ -398,18 +420,21 @@ class DiscreteDomain(object):
         
     @classmethod
     @typechecker((type,str,), None)
-    def from_file(cls, filename, **kwargs):
+    def from_file(cls, file, **kwargs):
         """Constructor to build a ``DiscreteDomain`` instance from a source
         mesh file.
         
         Parameters
         ----------
-        filename : str
-            Path of the mesh file.
+        file : str (or b64 encoded str)
+            Path to or content of the mesh file.
         """
-        if not os.path.isfile(filename):
-            Logger.serror('Could not load mesh file: "{}"'.format(filename))
-        return cls(filename=filename, **kwargs)
+        if not os.path.isfile(file):
+            try:
+                data = base64.b64decode(file).decode()
+            except binascii.Error:
+                Logger.serror('Could not load or decrypt content from mesh file.')
+        return cls(file=file, **kwargs)
     @classmethod
     @typechecker((type,np.ndarray,np.ndarray,), None)
     def from_data(cls, nodes, elements, **kwargs):
@@ -462,43 +487,43 @@ class DiscreteDomain(object):
     @typechecker((type,[int,float],[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def rectangle(cls, width, height, n_points=10, nb_borders=1, **kwargs):
+    def rectangle(cls, width, height, n_points=10, n_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         a rectangular 2D geometry.
         
         The parameters are the same as in the Geometrizor's make_rectangle()
         function."""
-        nodes, elements = make_rectangle(width, height, n_points, nb_borders)
+        nodes, elements = make_rectangle(width, height, n_points, n_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     @classmethod
     @typechecker((type,[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def line(cls, length, n_points=10, nb_borders=1, **kwargs):
+    def line(cls, length, n_points=10, n_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         a rectangular 2D geometry.
         
         The parameters are the same as in the Geometrizor's make_line()
         function."""
-        nodes, elements = make_line(length, n_points, nb_borders)
+        nodes, elements = make_line(length, n_points, n_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     @classmethod
     @typechecker((type,[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def circle(cls, radius, an_points=20, rn_points=3, nb_borders=1, **kwargs):
+    def circle(cls, radius, an_points=20, rn_points=3, n_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         a circular 2D geometry.
         
         The parameters are the same as in the Geometrizor's make_circle()
         function."""
-        nodes, elements = make_circle(radius, an_points, rn_points, nb_borders)
+        nodes, elements = make_circle(radius, an_points, rn_points, n_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     @classmethod
     @typechecker((type,[int,float],[int,float]), None,
     msg_='Cannot initialize "$FUNCNAME" primitive: $IN? param #$PARAMIDX should ' \
          'be of type "$PARAMTYPE".')
-    def ring(cls, rint, rext, an_points=20, rn_points=3, nb_borders=1, **kwargs):
+    def ring(cls, rint, rext, an_points=20, rn_points=3, n_borders=1, **kwargs):
         """Constructor to build a DiscreteDomain instance on-the-go with
         an annular 2D geometry.
         
@@ -507,7 +532,7 @@ class DiscreteDomain(object):
         if rint >= rext:
             Logger.serror('Cannot initialize "ring" primitive: "rint" is greater '
                           'than or equal to "rext"! ({} >= {})'.format(rint, rext))
-        nodes, elements = make_ring(rint, rext, an_points, rn_points, nb_borders)
+        nodes, elements = make_ring(rint, rext, an_points, rn_points, n_borders)
         return cls(nodes=nodes, elements=elements, **kwargs)
     
     @staticmethod
@@ -624,7 +649,7 @@ class DiscreteDomain(object):
     def visualize(self, z=None, z_ex=None, dim=2, value=True, show_labels=False,
                   show_triangulation=False, complex='abs', cmap='coolwarm',
                   levels=20, figscale=(1,1), use_subtriangulation=False,
-                  to_file=None, title=None, no_plot=False):
+                  to_file=None, to_stream=None, title=None, no_plot=False):
         """Plots values on this domain instance: either the z-component of each
         vertex or a specific solution if one is provided. If two sets of values
         are given, the two plots are shown side by side.
@@ -671,6 +696,9 @@ class DiscreteDomain(object):
             should be saved to. The extension must be included and will determine
             the format of the file (like it does in Matplotlib, see:
             https://matplotlib.org/api/_as_gen/matplotlib.pyplot.savefig.html).
+        to_stream : io.stream or None, optional
+            If it is not None, this parameter is the direct pointer to a stream
+            to write the figure in.
         title : str or None, optional
             If it is not None, this parameter is the title of the plot (only for
             a single plot).
@@ -883,6 +911,9 @@ class DiscreteDomain(object):
                     ax.text(tx, ty, lbl, ha='center', va='center', fontsize=13,
                             fontweight='medium', color=c, backgroundcolor=[1,1,1,0.8])
         
-        if isinstance(to_file, str): plt.savefig(to_file)
-        if not no_plot: plt.show()
+        if to_stream is not None:
+            plt.savefig(to_stream, format='png')
+        else:
+            if isinstance(to_file, str): plt.savefig(to_file)
+            if not no_plot: plt.show()
         return fig

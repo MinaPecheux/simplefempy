@@ -1,74 +1,103 @@
-# Copyright 2019 - M. Pecheux
+# Copyright 2019 Mina Pêcheux (mina.pecheux@gmail.com)
+# ---------------------------
+# Distributed under the MIT License:
+# ==================================
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# ==============================================================================
 # [SimpleFEMPy] A basic Python PDE solver with the finite elements method
 # ------------------------------------------------------------------------------
 # converter.py - I/O functions for mesh import/export and solution export
 # ==============================================================================
 import os
 import re
+import base64, binascii
 from itertools import dropwhile
 import numpy as np
 
 from .utils.logger import Logger
 from .utils.misc import to_3args, check_complex_solution, nb_params, is_number
-from .utils.maths import FunctionalFunction
+from .utils.maths import FunctionalFunction, dirac
 
-VF_PARSER = {
+PARSER_REGEX = {
     'surface': r'(.?)int2d\(([^\)]+)\)\(([^\)]+)\)',
     'edge': r'(.?)int1d\(([^\)]+)\)\(([^\)]+)\)',
     'dirichlet': r'(on)\(([^\)]+)\)',
     'grad': r'grad{([^\}]*)}',
-    'domain': r'([^\(]*){([^\}]*)}'
+    'domain': r'([^\(]*){([^\}]*)}',
+    'vars': r'(?P<name>[^\s]*)\s*=\s*(?P<value>[^\n;]*);?'
 }
 
-def load_gmsh(filename):
-    """Loads a mesh from a GMSH file (version 2.2).
+def load_gmsh(data):
+    """Loads a mesh from a GMSH file (version 2.2). If the data provided is a
+    filename, then the file is opened in the function. Otherwise, it is the
+    content of the file directly encoded in base64.
     
     Parameters
     ----------
-    filename : str
-        Path to the mesh file.
+    data : str
+        Data to analyze.
     """
-    with open(filename, 'r') as f:
-        lines = f.readlines()
+    try:
+        data = base64.b64decode(data).decode()
+        lines = data.split('\n')
+    except binascii.Error:
+        with open(data, 'r') as f:
+            lines = f.readlines()
         
-        nb_nodes = 0
-        i = 0   # go by index for Python 2.x compatibility
-        # (.. drop top info)
-        while not lines[i].split()[0].isdigit(): i += 1
-            
-        # read nodes
-        nb_nodes = int(lines[i].split()[0])
+    nb_nodes = 0
+    i = 0   # go by index for Python 2.x compatibility
+    # (.. drop top info)
+    while not lines[i].split()[0].isdigit(): i += 1
+        
+    # read nodes
+    nb_nodes = int(lines[i].split()[0])
+    i += 1
+    nodes = np.zeros((nb_nodes, 3))
+    for node in lines[i:]:
+        if node[0] == '$': break
+        info = node.strip().split()
+        node_id = int(info[0])-1
+        nodes[node_id, 0] = info[1]
+        nodes[node_id, 1] = info[2]
+        nodes[node_id, 2] = info[3]
         i += 1
-        nodes = np.zeros((nb_nodes, 3))
-        for node in lines[i:]:
-            if node[0] == '$': break
-            info = node.strip().split()
-            node_id = int(info[0])-1
-            nodes[node_id, 0] = info[1]
-            nodes[node_id, 1] = info[2]
-            nodes[node_id, 2] = info[3]
-            i += 1
 
-        i += 2 # skip middle lines
-        
-        # read elements
-        line = lines[i]
-        nb_elems = int(line.split()[0])
+    i += 2 # skip middle lines
+    
+    # read elements
+    line = lines[i]
+    nb_elems = int(line.split()[0])
+    i += 1
+    # (type, physical number, elem1 id, elem2 id, elem3 id)
+    elements = np.zeros((nb_elems, 5), dtype=np.int)
+    for elem in lines[i:]:
+        if elem[0] == '$': break
+        info    = elem.strip().split()
+        elem_id = int(info[0])-1
+        elements[elem_id, 0] = info[1]
+        elements[elem_id, 1] = info[3]
+        elements[elem_id, 2] = int(info[5])-1
+        elements[elem_id, 3] = int(info[6])-1
+        try:               elements[elem_id, 4] = int(info[7])-1
+        except IndexError: elements[elem_id, 4] = 0
         i += 1
-        # (type, physical number, elem1 id, elem2 id, elem3 id)
-        elements = np.zeros((nb_elems, 5), dtype=np.int)
-        for elem in lines[i:]:
-            if elem[0] == '$': break
-            info    = elem.strip().split()
-            elem_id = int(info[0])-1
-            elements[elem_id, 0] = info[1]
-            elements[elem_id, 1] = info[3]
-            elements[elem_id, 2] = int(info[5])-1
-            elements[elem_id, 3] = int(info[6])-1
-            try:               elements[elem_id, 4] = int(info[7])-1
-            except IndexError: elements[elem_id, 4] = -1
-            i += 1
-        return nodes, elements
+    return nodes, elements
         
 def save_gmsh(filename, domain):
     """Saves an instance of DiscreteDomain (i.e.: a mesh) to a GMSH file
@@ -248,6 +277,21 @@ def save_to_vtk(file, domain, solution):
 
     Logger.slog('Exported solution to .vtu file: "{}"'.format(file), level='info')
 
+def variable_parser(vars):
+    """Parses a string with variables into the corresponding variables (as
+    Python objects). The string must be of the form:
+    "name1 = value1; name2 = value2; ...".
+    
+    Parameters
+    ----------
+    vars : str
+        Input string to parse into variables.
+    """
+    matches = re.finditer(PARSER_REGEX['vars'], vars)
+    if matches is not None:
+        return { m.group('name'): eval(m.group('value')) for m in matches }
+    return None
+
 def formulation_parser(s, loc):
     """Parses a variational formulation-formatted string.
     
@@ -275,7 +319,7 @@ def formulation_parser(s, loc):
             elif term.isdigit():
                 coef *= int(term)
             else:
-                m = re.match(VF_PARSER['grad'], term)
+                m = re.match(PARSER_REGEX['grad'], term)
                 if m is not None:
                     nb_grads += 1
                     term = m.group(1)
@@ -326,7 +370,7 @@ def formulation_parser(s, loc):
     a = []  # left-hand side (depends on the solution)
     l = []  # right-hand side (does not depend on the solution)
     # get surface integrals
-    matches = re.findall(VF_PARSER['surface'], s)
+    matches = re.findall(PARSER_REGEX['surface'], s)
     for sign, domain, expr in matches:
         if domain not in loc:
             Logger.serror('Unknown DiscreteDomain used in Variational '
@@ -336,25 +380,24 @@ def formulation_parser(s, loc):
         else: Logger.serror('Invalid operator before variational term: "{}"'.format(sign))
         _treat_terms(sign, expr, a, l, ref_domain, vars)
     # get edge integrals
-    matches = re.findall(VF_PARSER['edge'], s)
+    matches = re.findall(PARSER_REGEX['edge'], s)
     for sign, domain, expr in matches:
-        m = re.match(VF_PARSER['domain'], domain)
-        subdomain = None
+        m = re.match(PARSER_REGEX['domain'], domain)
+        subdomains = None
         if m is not None:
-            t = m.group(2)
-            subdomain = int(t) if t.isdigit() else t
+            subdomains = [int(t) if t.isdigit() else t for t in m.group(2).split(',')]
             parent = m.group(1)
-        if subdomain is None:
-            Logger.serror('Invalid border integral: you must specify a border '
-                          'of the DiscreteDomain.')
+        if subdomains is None:
+            Logger.serror('Invalid border integral: you must specify one or more '
+                          'borders of the DiscreteDomain.')
         if parent not in loc:
             Logger.serror('Unknown DiscreteDomain used in Variational '
                           'Formulation: "{}".'.format(parent))
-        dom = ref_domain(subdomain)
+        dom = ref_domain(*subdomains)
         _treat_terms(sign, expr, a, l, dom, vars)
     # get dirichlet conditions
     dirichlet = None
-    matches = re.findall(VF_PARSER['dirichlet'], s)
+    matches = re.findall(PARSER_REGEX['dirichlet'], s)
     for _, match in matches:
         # detailed unpacking for Python 2.x compatibility
         spl = match.split(',')
