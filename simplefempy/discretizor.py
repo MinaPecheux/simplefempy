@@ -707,7 +707,7 @@ class DiscreteDomain(object):
             returned by the function).
         """
         if dim != 2 and dim != 3:
-            Logger.slog('Cannot plot solution for {}D space. Aborting.'.format(d),
+            Logger.slog('Cannot plot solution for {}D space. Aborting.'.format(dim),
                         level='warning')
             return
         if dim == 3 and show_triangulation:
