@@ -51,7 +51,7 @@ def _time_dependent(scheme):
     u0 = lambda x, y: np.sin(np.pi*x) * np.sin(np.pi*y)
     f = lambda x, y, t: (2*np.pi*np.pi - 1)*np.exp(-t)*np.sin(np.pi*x)*np.sin(np.pi*y)
     
-    Vh = DiscreteDomain.rectangle(1,1,step=8)
+    Vh = DiscreteDomain.rectangle(1,1,n_points=8)
     Tmax = 1; dt = 5e-4; n_iter = int(Tmax/dt)+1
     init_u = u0(*Vh.points).reshape((Vh.Nv,1))
 
@@ -75,7 +75,7 @@ def _time_dependent(scheme):
 ## --------------
 def acoustic_diffraction_simple():
     # create discrete domain
-    Vh = DiscreteDomain.ring(0.5, 1.0, astep=40, rstep=20, nb_borders=2,
+    Vh = DiscreteDomain.ring(0.5, 1.0, an_points=40, rn_points=20, n_borders=2,
         labels={ 'Omega': 10, 'GammaInt': 1, 'GammaExt': 2 })
     _acoustic_diffraction(Vh)
 
@@ -99,7 +99,7 @@ def wave_interference():
 
     'u,v:-int2d(Vh)(grad{u}*grad{v}) + int2d(Vh)(k*k*u*v) + int1d(Vh{1})(1j*k*u*v) + int2d(Vh)(f*v)'
     # discretize domain
-    Vh = DiscreteDomain.rectangle(6,4,step=50)
+    Vh = DiscreteDomain.rectangle(6,4,n_points=50)
     # prepare variational formulation
     Problem = VariationalFormulation.from_str(
         'u,v:-int2d(Vh)(grad{u}*grad{v}) + int2d(Vh)(k*k*u*v)' \
@@ -113,7 +113,7 @@ def chemicals_propagation():
         f = lambda x,y: 0.
         w = np.array([-0.01, 0.])
         # discretize domain
-        Vh = DiscreteDomain.rectangle(200, 5, step=60, nb_borders=4,
+        Vh = DiscreteDomain.rectangle(200, 5, n_points=60, n_borders=4,
             labels={'Omega': 10, 'Gamma_U': 2, 'Gamma_C': 4})
         # prepare variational formulation
         Problem = VariationalFormulation.from_str(
@@ -128,7 +128,7 @@ def chemicals_propagation():
 
 def deformation_1d_anim():
     # prepare variables common to all executions
-    vars_1d['domain'] = DiscreteDomain.line(1, step=30)
+    vars_1d['domain'] = DiscreteDomain.line(1, n_points=30)
     vars_1d['p'] = 1
     vars_1d['q'] = 1
     # prepare list of force application points
@@ -144,7 +144,7 @@ def deformation_1d_anim():
 
 def deformation_1d_csv():
     # prepare variables common to all executions
-    vars_1d['domain'] = DiscreteDomain.line(1, step=30)
+    vars_1d['domain'] = DiscreteDomain.line(1, n_points=30)
     vars_1d['p'] = 1
     vars_1d['q'] = 1
     # prepare list of force application points
@@ -161,7 +161,7 @@ def poisson():
     f = lambda x, y: x*y
     for fe_type in ['P1', 'P2', 'P3']:
         # discretize domain
-        Vh = DiscreteDomain.circle(1, astep=40, rstep=20, fe_type=fe_type)
+        Vh = DiscreteDomain.circle(1, an_points=40, rn_points=20, fe_type=fe_type)
         # prepare variational formulation
         Problem = VariationalFormulation(Vh,
             [('RIGIDITY', Vh)], [(Vh, f)], dirichlet=(1,0.))
@@ -174,7 +174,7 @@ def poisson():
 def poisson_robin():
     f = lambda x, y: (2*np.pi*np.pi + 1)*np.sin(np.pi*x)*np.sin(np.pi*y)
     # discretize domain
-    Vh = DiscreteDomain.rectangle(1, 1, step=20, nb_borders=4)
+    Vh = DiscreteDomain.rectangle(1, 1, n_points=20, n_borders=4)
     # prepare variational formulation
     Problem = VariationalFormulation(Vh,
         [('RIGIDITY', Vh), ('MASS', Vh(1), -10.)],
@@ -255,11 +255,11 @@ def error_analysis():
     errors = InterpolationError(norm) # create the object to store the errors
     size   = 1
     # study the error for several finite elements and several discretization
-    # steps
-    for step in range(5, 35, 5):
+    # n_pointss
+    for n_points in range(5, 35, 5):
         # discretize domain with 2 types of finite elements
-        Vh1 = DiscreteDomain.rectangle(size,size,step=step,fe_type='P1')
-        Vh2 = DiscreteDomain.rectangle(size,size,step=step,fe_type='P2')
+        Vh1 = DiscreteDomain.rectangle(size,size,n_points=n_points,fe_type='P1')
+        Vh2 = DiscreteDomain.rectangle(size,size,n_points=n_points,fe_type='P2')
         # prepare 1st variational formulation
         Problem1 = VariationalFormulation(Vh1,
             [('RIGIDITY',Vh1), ('MASS',Vh1)], [(Vh1, f)], dirichlet=(1,0.))
@@ -273,7 +273,7 @@ def error_analysis():
         u_exact1 = u_ex(*Vh1.points)
         u_exact2 = u_ex(*Vh2.points)
         # compute L2 error
-        h = size/step
+        h = size/n_points
         errors[h] = Vh1.error(u1, u_exact1, h, norm=norm)
         errors[h] = Vh2.error(u2, u_exact2, h, norm=norm)
     # output to table and graph
@@ -330,7 +330,7 @@ MENU = [
      'polynomials and exports the result to a .mp4 movie.'),
     ('Interpolation error analysis (for P1, P2-Lagrange finite elements)', error_analysis,
      'This example shows the evolution of the interpolation error depending on '
-     'the type of finite elements and the discretization step.'),
+     'the type of finite elements and the discretization n_points.'),
 ]
 
 def _show_menu():
