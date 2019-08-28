@@ -97,7 +97,6 @@ def wave_interference():
     k = 1.5*np.pi
     f = FunctionalFunction(dirac(1.,2.,tol=0.1)) + FunctionalFunction(dirac(5.,2.,tol=0.1))
 
-    'u,v:-int2d(Vh)(grad{u}*grad{v}) + int2d(Vh)(k*k*u*v) + int1d(Vh{1})(1j*k*u*v) + int2d(Vh)(f*v)'
     # discretize domain
     Vh = DiscreteDomain.rectangle(6,4,n_points=50)
     # prepare variational formulation
