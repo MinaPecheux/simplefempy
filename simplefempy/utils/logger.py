@@ -33,6 +33,9 @@ import copy
 
 from simplefempy.settings import LIB_SETTINGS, TK_INSTANCE
 
+class SimpleFemPyError(Exception):
+    pass
+
 # ---- ** ----
 # From: https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
 K, R, G, Y, B, M, C, W = range(8)
@@ -218,6 +221,8 @@ class Logger(object):
         if TK_INSTANCE['app'] is not None: TK_INSTANCE['app'].exit()
         if not self.abort_errors:
             sys.exit(1)
+        else:
+            raise SimpleFemPyError
 
     @staticmethod
     def sget_level():
