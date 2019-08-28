@@ -216,7 +216,8 @@ class Logger(object):
         """
         self.log(msg, level='error', stackoffset=stackoffset+1)
         if TK_INSTANCE['app'] is not None: TK_INSTANCE['app'].exit()
-        sys.exit(1)
+        if not self.abort_errors:
+            sys.exit(1)
 
     @staticmethod
     def sget_level():
